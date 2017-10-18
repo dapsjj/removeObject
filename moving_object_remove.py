@@ -100,18 +100,21 @@ class HistMaxLib:
             hist_arr_dst0[i] = hist_arr_src0[i] * hist_arr_src1[i]
 
     def hist2med( hist_arr_src0, hist_arr_dst0, pix_count0, hist_arr_length0 ):
-        half = int( ( pix_count0 + 1 ) / 2 )
+        half = pix_count0 / 2
         sum = 0
+        val = 0
+        idx = -1
+
         for i in range( hist_arr_length0 ):
             sum += hist_arr_src0[i]
             hist_arr_dst0[i] = sum
-        val = 0
-        idx = -1
+
         for i in range( hist_arr_length0 ):
             if half <= hist_arr_dst0[i]:
                 val = hist_arr_dst0[i]
                 idx = i
                 break
+
         return [val, idx]
 
     def print_hist( hist_arr0, hist_name0 ):
@@ -176,19 +179,19 @@ class HistMaxBody:
         HistMaxLib.print_hist( self.hist4_arr, 'hist4' )
         HistMaxLib.print_hist( self.hist5_arr, 'hist5' )
 
-        print( 'hist0_max_value\t' + str( self.hist0_max_val ) )
+        print( 'hist0_max_val\t' + str( self.hist0_max_val ) )
         print( 'hist0_max_idx\t' + str( self.hist0_max_idx ) )
 
-        print( 'hist1_max_value\t' + str( self.hist1_max_val ) )
+        print( 'hist1_max_val\t' + str( self.hist1_max_val ) )
         print( 'hist1_max_idx\t' + str( self.hist1_max_idx ) )
 
-        print( 'hist2_max_value\t' + str( self.hist2_max_val ) )
+        print( 'hist2_max_val\t' + str( self.hist2_max_val ) )
         print( 'hist2_max_idx\t' + str( self.hist2_max_idx ) )
 
-        print( 'hist3_max_value\t' + str( self.hist3_max_val ) )
+        print( 'hist3_max_val\t' + str( self.hist3_max_val ) )
         print( 'hist3_max_idx\t' + str( self.hist3_max_idx ) )
 
-        print( 'hist4_max_value\t' + str( self.hist4_max_val ) )
+        print( 'hist4_max_val\t' + str( self.hist4_max_val ) )
         print( 'hist4_max_idx\t' + str( self.hist4_max_idx ) )
 
         print( 'dst_pix\t', str( self.get_dst_pix() ) )
@@ -236,10 +239,6 @@ class HistMaxBodyYCC:
         self.dst_pix_cb = self.hist_max_cb.get_dst_pix()
 
     def dump( self ):
-        # self.hist_max_yy.dump()
-        # self.hist_max_cb.dump()
-        # self.hist_max_cr.dump()
-
         print( 'pix_arr_yy\t' + str( self.dst_pix_yy ) )
         print( 'pix_arr_cr\t' + str( self.dst_pix_cr ) )
         print( 'pix_arr_cb\t' + str( self.dst_pix_cb ) )
@@ -274,6 +273,9 @@ class MedianBody:
             idx = int( self.pix_arr[i] )
             self.hist0_arr[idx] += 1
 
+    def calc_med( self ):
+        self.med0_val, self.med0_idx = HistMaxLib.hist2med( hist_arr_src0 = self.hist0_arr, hist_arr_dst0 = self.hist1_arr, pix_count0 = self.pix_arr_length, hist_arr_length0 = self.hist_arr_length )
+
     def get_dst_pix( self ):
         return self.med0_idx + self.pix_min
 
@@ -285,10 +287,6 @@ class MedianBody:
         print( 'med0_idx\t' + str( self.med0_idx ) )
 
         print( 'dst_pix\t', str( self.get_dst_pix() ) )
-
-    def calc_med( self ):
-        self.med0_val, self.med0_idx = HistMaxLib.hist2med( hist_arr_src0 = self.hist0_arr, hist_arr_dst0 = self.hist1_arr, pix_count0 = self.pix_arr_length, hist_arr_length0 = self.hist_arr_length )
-
 
 class ImgProcessLib:
     def cvt_BGR2YyCrCb( b, g, r, delta ):
@@ -330,7 +328,6 @@ class ImgProcessLib:
             r = 255
 
         return [ int( b + 0.5 ), int( g + 0.5 ), int( r + 0.5 ) ]
-
 
 class YccFromFile:
     def __init__( self, dirpath, outpath, row_num, col_num, dumpXY ):
@@ -407,11 +404,11 @@ if __name__ == '__main__':
     if argc == 2:
         mode = argvs[1]
     else:
-        mode = 1
+        mode = 0
 
     print( 'mode\t' + str( mode ) )
     if mode == 1:
-        back, body, noise, size, ratio = 185, 50, 10, 100, 0.8
+        back, body, noise, size, ratio = 100, 200, 10, 100, 0.5
     elif mode == 2:
         back, body, noise, size, ratio = 100, 200, 10, 100, 0.8
     elif mode == 3:
@@ -431,7 +428,7 @@ if __name__ == '__main__':
     elif mode == 10:
         back, body, noise, size, ratio = 0, 0, 0, 100, 1
     else:
-        back, body, noise, size, ratio = 185, 50, 0, 100, 0.8
+        back, body, noise, size, ratio = 100, 200, 0, 100, 0.8
 
     random.seed(10)
     gen = Generator( back, body, noise, size, ratio )
@@ -439,14 +436,10 @@ if __name__ == '__main__':
     gen.print_data()
     pix_arr = gen.get_data()
 
-    hmax_body = HistMaxBody( pix_arr, size, 0, 256 )
-    hmax_body.calc_hist()
-    hmax_body.calc_hist_max()
-    hmax_body.dump()
-
     med_body = MedianBody( pix_arr, size, 0, 256 )
     med_body.calc_hist()
     med_body.calc_med()
     med_body.dump()
+
 
 
